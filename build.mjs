@@ -12,28 +12,19 @@ const webExt = webExtModule?.default ?? webExtModule;
 
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.join(rootDir, 'dist');
-const chromeOutDir = path.join(distDir, 'chrome');
-const firefoxOutDir = path.join(distDir, 'firefox');
+const outDir = path.join(distDir, 'extension');
 const artifactsDir = path.join(rootDir, 'artifacts');
-const chromeZipName = 'josm-strava-heatmap-chrome.zip';
-const firefoxZipName = 'josm-strava-heatmap-firefox.zip';
-const chromeManifestPath = path.join(rootDir, 'manifest.v3.json');
-const firefoxManifestPath = path.join(rootDir, 'manifest.v2.json');
 const isDev = process.argv.includes('--dev');
 
 async function run() {
   console.log(`Building in ${isDev ? 'development' : 'production'} mode...`);
   await fs.rm(distDir, { recursive: true, force: true });
 
-  await Promise.all([
-    buildExtension({ outDir: chromeOutDir, manifestPath: chromeManifestPath }),
-    buildExtension({ outDir: firefoxOutDir, manifestPath: firefoxManifestPath })
-  ]);
-
+  await buildExtension();
   await packageArtifacts();
 }
 
-function buildExtension({ outDir, manifestPath }) {
+function buildExtension() {
   return build({
     entryPoints: [
       path.join(rootDir, 'background.js'),
@@ -50,7 +41,7 @@ function buildExtension({ outDir, manifestPath }) {
       copy({
         resolveFrom: 'cwd',
         assets: [
-          { from: [manifestPath], to: [path.join(outDir, 'manifest.json')] },
+          { from: ['manifest.json'], to: [path.join(outDir, 'manifest.json')] },
           { from: ['content.css'], to: [path.join(outDir, 'content.css')] },
           { from: ['icons/**/*'], to: [path.join(outDir, 'icons')] }
         ]
@@ -75,7 +66,7 @@ async function packageArtifacts() {
 }
 
 async function packageChrome() {
-  const outFile = path.join(artifactsDir, chromeZipName);
+  const outFile = path.join(artifactsDir, 'josm-strava-heatmap-chrome.zip');
   await fs.rm(outFile, { force: true });
   return new Promise((resolve, reject) => {
     const output = createWriteStream(outFile);
@@ -83,17 +74,17 @@ async function packageChrome() {
     output.on('close', resolve);
     archive.on('error', reject);
     archive.pipe(output);
-    archive.directory(chromeOutDir, false);
+    archive.directory(outDir, false);
     archive.finalize();
   }).then(() => outFile);
 }
 
 async function packageFirefox() {
   const result = await webExt.cmd.build({
-    sourceDir: firefoxOutDir,
+    sourceDir: outDir,
     artifactsDir,
     overwriteDest: true,
-    filename: firefoxZipName
+    filename: 'josm-strava-heatmap-firefox.zip'
   }, {
     shouldExitProgram: false,
     showReadyMessage: false

@@ -5,10 +5,7 @@ const URL_PREFIX = "https://content-a.strava.com/identified/globalheat/";
 const URL_SUFFIX = "/{zoom}/{x}/{y}.png";
 
 /** @type {string[]} */
-const VALID_SPORT_TYPES = ['all', 'ride', 'run', 'water', 'winter'];
-
-/** @type {string[]} */
-const VALID_COLORS = ['hot', 'blue', 'purple', 'gray', 'bluered', 'mobileblue'];
+const VALID_COLORS = ['hot', 'blue', 'purple', 'gray', 'bluered', 'mobileblue', 'orange'];
 
 /** @type {string[]} */
 const REQUIRED_COOKIE_NAMES = [
@@ -30,12 +27,15 @@ async function getHeatmapUrl(tabUrl, storeId)
     let stravaUrl = new URL(tabUrl);
 
     // Attempt to set map type based on sport url parameter.
-    // Walk and hike are the same as run. Default to 'all'.
-    let sport = stravaUrl.searchParams.get('sport')?.toLowerCase() || 'all';
-    if  (sport == 'walk' || sport == 'hike') {
-        sport = 'run';
+    const sport = stravaUrl.searchParams.get('sport');
+    let mapType;
+    if (!sport || sport === 'All') {
+        mapType = 'all';
+    } else if (sport.endsWith('Like')) {
+        mapType = sport.replace('Like', '').toLowerCase();
+    } else {
+        mapType = 'sport_' + sport;
     }
-    const mapType = VALID_SPORT_TYPES.includes(sport) ? sport : 'all';
 
     // Attempt to set map color based on gColor url parameter. Default to 'hot'.
     const gColor = stravaUrl.searchParams.get('gColor');
