@@ -80,9 +80,10 @@ async function getCookieValue(name, url, storeId)
     }
 }
 
-browser.runtime.onMessage.addListener(async function (_message, sender, _sendResponse) {
+browser.runtime.onMessage.addListener(async function (message, sender) {
+    if (message.name !== 'getHeatmapUrl') return;
     return getHeatmapUrl(
         sender.tab.url,
         sender.tab.cookieStoreId
-    )
+    );
 });

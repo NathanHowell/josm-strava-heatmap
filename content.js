@@ -106,7 +106,6 @@ function buildJosmUrl(title, cookies, heatmapUrl)
 {
     const josmUrl = new URL(JOSM_IMAGERY_URL);
     const cookiesValue = cookies
-        .filter(([_key, value]) => value !== null && value !== undefined)
         .map(([key, value]) => `${key}=${value}`)
         .join(';');
     josmUrl.searchParams.set('title', title);
